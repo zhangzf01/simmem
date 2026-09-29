@@ -1,0 +1,18 @@
+# Held-out evaluation (paper Table 1): 200 test tasks x 1 dialogue, eager termination, no simulator memory.
+# scripts/eval_heldout.sh fills in the __PLACEHOLDERS__ for one persuadee.
+eval:
+  defaults:
+    n_samples_per_eval_prompt: 1
+    temperature: 0.7       # persuader (policy) sampling; the persuadee always samples at 0.7
+    top_p: 0.95
+    top_k: -1
+    max_response_len: 2048
+  datasets:
+    - name: p4g___NAME___eager
+      path: "usim://p4g/test"
+      metadata_overrides:
+        p4g_termination_mode: eager
+        usim_fixed_opponent_model: "__MODEL__"
+        usim_fixed_opponent_base_url: "__BASE_URL__"
+        usim_fixed_opponent_api_key_var: "__KEY_VAR__"
+        persuadee_prompt_prefix: ""

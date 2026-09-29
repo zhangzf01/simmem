@@ -1,0 +1,5 @@
+# On top of slime@8efb1166's environment (see scripts/setup_env.sh). Versions of the paper runs.
+litellm==1.98.0
+openai==2.54.0
+convokit==3.0.0
+numpy<2
