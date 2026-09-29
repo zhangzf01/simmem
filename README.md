@@ -101,18 +101,17 @@ A run directory `runs/p4g_4b_<arm>_<stamp>/` contains `ckpt/iter_XXXXXXX` (every
 * `audit_log.jsonl`: every judge call (group, mean/std, raw output, parsed verdict);
 * `events.jsonl`: one `snapshot` event per step (number of rules, size of the rendered block) and one `rule_added` event per rule.
 
-`results/qwen3_4b_simmem/sim_memory/` holds these three files for the paper's run: 84 audits, 12 rules written
-between steps 120 and 243 (the rules shown in the appendix). `python -m usim.simmem.offline --run <run dir> --out <dir>
+`results/qwen3_4b_simmem/sim_memory/` holds these three files for the paper's run (used by the tests and by the
+frozen-rules ablation below). `python -m usim.simmem.offline --run <run dir> --out <dir>
 --judge llm --judge-model ... --judge-base-url ...` replays the memory loop over the saved trajectories of a run.
 
-**Ablations** (paper, Table "Ablations of SimMem"). All variants branch from the GRPO run's checkpoint at iteration 99
-(before the full run writes its first rule at iteration 120):
+**Ablations** (paper, Table "Ablations of SimMem"). All variants branch from the GRPO run's checkpoint at iteration 99:
 
 ```bash
 G=runs/p4g_4b_grpo_<stamp>/ckpt/iter_0000099
 # w/o collapse check (evaluated at its last iteration, 149)
 ARM=simmem FROM_CKPT=$G RESTART=finetune NUM_ROLLOUT=150 bash scripts/train_p4g_4b.sh --simmem-no-collapse-check
-# frozen rules: the 12 final rules of the full run from the start, never audited (evaluated at iteration 149)
+# frozen rules: the final rules of the full run from the start, never audited (evaluated at iteration 149)
 ARM=simmem FROM_CKPT=$G RESTART=finetune NUM_ROLLOUT=150 bash scripts/train_p4g_4b.sh \
     --simmem-init results/qwen3_4b_simmem/sim_memory/memory.json --simmem-frozen
 # raw contexts: the flagged dialogue verbatim instead of a rule, 8 most recent rendered (resumes; evaluated at 249)
@@ -140,16 +139,7 @@ Model ids differ between providers; use the id under which your provider serves 
 `score_eval.py` prints the paper's metrics: **Deal** = share of dialogues with a donation and **Reward** = mean of
 min(amount / $2, 1), where only an explicit `[DONATE $x]` / `[GIVE $x]` / `[$x]` marker in a persuadee turn counts
 (the last one wins). It also prints the reward stored during the rollout, which additionally accepts
-natural-language amounts. The paper's 4B numbers (Deal / Reward):
-
-| Method | GPT-4o-mini | Doubao-Seed-2.0-mini | Ministral-3-14B | Macro-avg. |
-| --- | --- | --- | --- | --- |
-| Zero-shot | 19.5% / 0.099 | 29.5% / 0.133 | 21.5% / 0.109 | 23.5% / 0.114 |
-| GRPO | 28.5% / 0.216 | 69.5% / 0.324 | 35.5% / 0.211 | 44.5% / 0.250 |
-| SimMem | 50.0% / 0.443 | 70.0% / 0.643 | 53.5% / 0.376 | 57.8% / 0.487 |
-
-Both training and evaluation sample from LLM endpoints, so a rerun will not match these numbers exactly; for
-reference, re-evaluating the same SimMem checkpoint on GPT-4o-mini gave 50.5% / 0.460.
+natural-language amounts. Both training and evaluation sample from LLM endpoints, so reruns vary somewhat.
 
 ## Notes
 
